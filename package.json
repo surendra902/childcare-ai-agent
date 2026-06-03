@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@_davideast/stitch-mcp": "^0.9.0"
+  }
+}

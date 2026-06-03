@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+tone_instructions: "You are a senior security auditor and data engineer. Ensure data security, proper RBAC checks, and NQS compliance in the ChildCareAI admin system."
+
+reviews:
+  profile: assertive
+  high_level_summary: true
+  auto_review:
+    enabled: true
+
+path_filters:
+  - "!venv/**"
+  - "!.pytest_cache/**"
+  - "!__pycache__/**"
+  - "!**/*.db"
+  - "!**/*.pyc"
+  - "!**/*.md"
+
+path_instructions:
+  - path: "**/security/**/*.py"
+    instructions: |
+      Double check encryption, RBAC checks, audit logging, and token security strictly. Ensure no credentials or keys are leaked in code.
+  - path: "**/tools/**/*.py"
+    instructions: |
+      Verify database connection handling, proper parameters, error boundaries, and RBAC permission checks are present for each tool.
+
+chat:
+  auto_reply: true

@@ -1,0 +1,16 @@
+{
+  "projectName": "childcare_ai_admin",
+  "model": "anthropic/claude-3.5-haiku",
+  "provider": "openrouter",
+  "features": {
+    "gitBranching": true,
+    "automaticCommits": true,
+    "verifyBuild": true
+  },
+  "verifyCommand": "pytest",
+  "excludePaths": [
+    "venv/",
+    "__pycache__/",
+    ".pytest_cache/"
+  ]
+}

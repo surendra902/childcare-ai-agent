@@ -1,0 +1,9 @@
+[agent]
+name = "claude"
+model = "anthropic/claude-3.5-haiku"
+
+[tracker]
+maxIterations = 15
+iterationDelay = 1000
+allowSelfFix = true
+testCommand = "pytest"
