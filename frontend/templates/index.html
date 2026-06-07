@@ -451,13 +451,12 @@
 
     <script>
         // --- Configuration ---
-        const WS_BASE = window.location.protocol === "https:" ? "wss:" : "ws:";
         const API_BASE = window.location.origin;
         const sessionId = "sess_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 
         // --- State ---
-        let ws = null;
-        let isConnected = false;
+        let isConnected = true; // HTTP is always "connected"
+        let isSending = false;
         let hasMessages = false;
 
         // --- DOM ---
@@ -469,38 +468,9 @@
         const statusDot = document.getElementById("connection-dot");
         const statusText = document.getElementById("connection-status");
 
-        // --- WebSocket ---
-        function connect() {
-            ws = new WebSocket(`${WS_BASE}//${window.location.host}/ws/chat/${sessionId}`);
-            ws.onopen = () => {
-                isConnected = true;
-                statusDot.style.background = "var(--success)";
-                statusText.textContent = "Connected";
-            };
-            ws.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                typingEl.classList.remove("active");
-                if (data.type === "complete" || data.type === "ack") {
-                    addMessage("agent", data.content);
-                } else if (data.type === "error") {
-                    addMessage("agent", "⚠️ " + (data.content || "An error occurred."));
-                } else if (data.type === "approval_required") {
-                    addMessage("agent", "⏳ Awaiting director approval: " + data.action);
-                } else if (data.type === "tool_call") {
-                    addMessage("agent", "🔧 " + data.tool + "\n" + JSON.stringify(data.result, null, 2));
-                }
-            };
-            ws.onclose = () => {
-                isConnected = false;
-                statusDot.style.background = "var(--danger)";
-                statusText.textContent = "Disconnected";
-                setTimeout(connect, 3000);
-            };
-            ws.onerror = () => {
-                statusDot.style.background = "var(--warning)";
-                statusText.textContent = "Error";
-            };
-        }
+        // Mark as connected immediately (HTTP mode)
+        statusDot.style.background = "var(--success)";
+        statusText.textContent = "Connected";
 
         // --- Messages ---
         function addMessage(role, content) {
@@ -516,28 +486,72 @@
             div.innerHTML = `
                 <div class="msg-avatar">${avatar}</div>
                 <div>
-                    <div class="msg-content">${escapeHtml(content)}</div>
+                    <div class="msg-content">${formatContent(content)}</div>
                     <div class="msg-time">${time}</div>
                 </div>`;
             messagesEl.appendChild(div);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
+            requestAnimationFrame(() => {
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            });
         }
 
-        function escapeHtml(text) {
+        function formatContent(text) {
+            // Escape HTML first
             const d = document.createElement("div");
             d.textContent = text;
-            return d.innerHTML;
+            let escaped = d.innerHTML;
+            // Convert **bold** to <strong>
+            escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Convert line breaks
+            escaped = escaped.replace(/\n/g, '<br>');
+            return escaped;
         }
 
-        // --- Send ---
-        function sendMessage() {
+        // --- Send via HTTP POST ---
+        async function sendMessage() {
             const text = inputEl.value.trim();
-            if (!text || !isConnected) return;
+            if (!text || isSending) return;
+
             addMessage("user", text);
             inputEl.value = "";
             inputEl.style.height = "auto";
+            isSending = true;
+            sendBtn.disabled = true;
             typingEl.classList.add("active");
-            ws.send(JSON.stringify({ type: "message", content: text, session_id: sessionId }));
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/v1/demo/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: text,
+                        session_id: sessionId,
+                    }),
+                });
+
+                if (!resp.ok) {
+                    const errText = await resp.text();
+                    throw new Error(`Server error (${resp.status}): ${errText.slice(0, 150)}`);
+                }
+
+                const data = await resp.json();
+                typingEl.classList.remove("active");
+
+                if (data.content) {
+                    addMessage("agent", data.content);
+                }
+                if (data.requires_approval) {
+                    addMessage("agent", "⏳ This action requires director approval before proceeding.");
+                }
+            } catch (err) {
+                typingEl.classList.remove("active");
+                addMessage("agent", "⚠️ " + (err.message || "Failed to reach the server. Please try again."));
+                console.error("[ChildCareAI] Send error:", err);
+            } finally {
+                isSending = false;
+                sendBtn.disabled = false;
+                inputEl.focus();
+            }
         }
 
         function quickSend(text) {
@@ -556,9 +570,6 @@
             inputEl.style.height = "auto";
             inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
         });
-
-        // --- Boot ---
-        connect();
     </script>
 </body>
 </html>

@@ -100,8 +100,15 @@ app.include_router(ws_router)
 
 
 @app.get("/", response_class=HTMLResponse)
-async def serve_frontend() -> HTMLResponse:
-    """Serve the main chat UI."""
+async def serve_landing() -> HTMLResponse:
+    """Serve the professional landing / showcase page."""
+    html_path = Path(__file__).parent / "frontend" / "templates" / "landing.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
+@app.get("/chat", response_class=HTMLResponse)
+async def serve_chat() -> HTMLResponse:
+    """Serve the interactive chat UI."""
     html_path = Path(__file__).parent / "frontend" / "templates" / "index.html"
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 

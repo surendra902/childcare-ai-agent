@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChildCareAI — AI-Powered Admin Assistant for Childcare Centres</title>
+    <meta name="description" content="AI-powered scheduling, roster management, and communication assistant for Australian childcare centres. Enterprise-grade security with AES-256 encryption.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            --accent: #06b6d4;
+            --accent-dark: #0891b2;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --bg: #0a0a14;
+            --bg-card: #12121f;
+            --bg-elevated: #1a1a2e;
+            --border: rgba(255,255,255,0.06);
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- Navigation --- */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 16px 40px;
+            background: rgba(10, 10, 20, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-brand {
+            display: flex; align-items: center; gap: 10px;
+            text-decoration: none; color: var(--text);
+        }
+        .nav-logo {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: 700; color: #fff;
+        }
+        .nav-brand span {
+            font-size: 16px; font-weight: 600;
+            background: linear-gradient(135deg, var(--text), var(--primary-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .nav-links { display: flex; align-items: center; gap: 32px; }
+        .nav-links a {
+            color: var(--text-dim); text-decoration: none; font-size: 14px;
+            font-weight: 500; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text); }
+        .nav-cta {
+            padding: 10px 24px; border-radius: 10px;
+            background: var(--primary); color: #fff; border: none;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .nav-cta:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+        /* --- Hero Section --- */
+        .hero {
+            padding: 160px 40px 100px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 50%, rgba(6,182,212,0.08) 0%, transparent 40%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 16px; border-radius: 20px;
+            background: var(--primary-glow);
+            border: 1px solid rgba(99,102,241,0.2);
+            font-size: 13px; color: var(--primary-light);
+            font-weight: 500; margin-bottom: 24px;
+        }
+        .hero-badge .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--success);
+            animation: pulse-hero 2s ease-in-out infinite;
+        }
+        @keyframes pulse-hero {
+            0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+        }
+        .hero h1 {
+            font-size: clamp(36px, 5vw, 64px);
+            font-weight: 800; line-height: 1.1;
+            margin-bottom: 20px; position: relative;
+        }
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 18px; color: var(--text-dim);
+            max-width: 620px; margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+        .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .btn-primary {
+            padding: 14px 32px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff; font-size: 15px; font-weight: 600;
+            text-decoration: none; border: none; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(99,102,241,0.4); }
+        .btn-secondary {
+            padding: 14px 32px; border-radius: 12px;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            color: var(--text); font-size: 15px; font-weight: 600;
+            text-decoration: none; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-secondary:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-2px); }
+
+        /* --- Section Base --- */
+        section { padding: 100px 40px; }
+        .section-header {
+            text-align: center; margin-bottom: 60px;
+        }
+        .section-header .tag {
+            font-size: 12px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 2px; color: var(--accent);
+            margin-bottom: 12px; display: block;
+        }
+        .section-header h2 {
+            font-size: clamp(28px, 3.5vw, 42px);
+            font-weight: 700; margin-bottom: 16px;
+        }
+        .section-header p {
+            font-size: 16px; color: var(--text-dim);
+            max-width: 560px; margin: 0 auto;
+        }
+
+        /* --- Features Grid --- */
+        .features-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px; max-width: 1100px; margin: 0 auto;
+        }
+        .feature-card {
+            padding: 28px; border-radius: 16px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            transition: all 0.25s ease;
+        }
+        .feature-card:hover {
+            border-color: rgba(99,102,241,0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+        .feature-icon {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; margin-bottom: 16px;
+        }
+        .feature-icon.purple { background: rgba(99,102,241,0.15); }
+        .feature-icon.cyan { background: rgba(6,182,212,0.15); }
+        .feature-icon.green { background: rgba(34,197,94,0.15); }
+        .feature-icon.amber { background: rgba(245,158,11,0.15); }
+        .feature-icon.rose { background: rgba(244,63,94,0.15); }
+        .feature-icon.sky { background: rgba(56,189,248,0.15); }
+        .feature-card h3 {
+            font-size: 17px; font-weight: 600; margin-bottom: 8px;
+        }
+        .feature-card p { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+
+        /* --- Architecture Section --- */
+        .arch-section { background: var(--bg-card); }
+        .arch-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 60px; max-width: 1100px; margin: 0 auto;
+            align-items: center;
+        }
+        .arch-diagram {
+            background: var(--bg); border-radius: 16px;
+            border: 1px solid var(--border); padding: 32px;
+        }
+        .arch-layer {
+            padding: 14px 20px; border-radius: 10px;
+            margin-bottom: 12px; font-size: 14px; font-weight: 500;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .arch-layer:last-child { margin-bottom: 0; }
+        .arch-layer .icon { font-size: 20px; }
+        .arch-layer.frontend { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); }
+        .arch-layer.api { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.2); }
+        .arch-layer.orchestrator { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); }
+        .arch-layer.security { background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2); }
+        .arch-layer.data { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); }
+        .arch-arrow {
+            text-align: center; color: var(--text-muted); font-size: 18px;
+            margin: 4px 0;
+        }
+        .arch-details h3 {
+            font-size: 20px; font-weight: 600; margin-bottom: 16px;
+        }
+        .arch-details p {
+            font-size: 14px; color: var(--text-dim); margin-bottom: 16px;
+            line-height: 1.7;
+        }
+        .arch-list {
+            list-style: none; padding: 0;
+        }
+        .arch-list li {
+            padding: 10px 0; font-size: 14px; color: var(--text-dim);
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .arch-list li:last-child { border-bottom: none; }
+        .arch-list .check { color: var(--success); font-size: 16px; }
+
+        /* --- Security Section --- */
+        .security-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px; max-width: 1100px; margin: 0 auto;
+        }
+        .security-card {
+            padding: 24px; border-radius: 14px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            text-align: center;
+        }
+        .security-card .icon {
+            font-size: 32px; margin-bottom: 12px; display: block;
+        }
+        .security-card h4 {
+            font-size: 15px; font-weight: 600; margin-bottom: 6px;
+        }
+        .security-card p {
+            font-size: 13px; color: var(--text-dim);
+        }
+
+        /* --- Tech Stack Section --- */
+        .tech-grid {
+            display: flex; flex-wrap: wrap; gap: 12px;
+            justify-content: center; max-width: 900px; margin: 0 auto;
+        }
+        .tech-badge {
+            padding: 10px 20px; border-radius: 10px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            font-size: 14px; font-weight: 500; color: var(--text-dim);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .tech-badge .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+        .tech-badge .dot.python { background: #3776ab; }
+        .tech-badge .dot.js { background: #f7df1e; }
+        .tech-badge .dot.db { background: var(--success); }
+        .tech-badge .dot.ai { background: var(--primary); }
+        .tech-badge .dot.security { background: #ef4444; }
+
+        /* --- CTA Section --- */
+        .cta-section {
+            text-align: center;
+            background: linear-gradient(180deg, var(--bg) 0%, rgba(99,102,241,0.05) 100%);
+        }
+        .cta-section h2 {
+            font-size: clamp(28px, 3.5vw, 42px);
+            font-weight: 700; margin-bottom: 16px;
+        }
+        .cta-section p {
+            font-size: 16px; color: var(--text-dim);
+            max-width: 480px; margin: 0 auto 32px;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            padding: 40px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        .footer p { font-size: 13px; color: var(--text-muted); }
+        .footer a { color: var(--primary-light); text-decoration: none; }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .nav { padding: 12px 20px; }
+            .nav-links a:not(.nav-cta) { display: none; }
+            section { padding: 60px 20px; }
+            .hero { padding: 120px 20px 60px; }
+            .arch-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <a href="/" class="nav-brand">
+            <div class="nav-logo">C</div>
+            <span>ChildCareAI</span>
+        </a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#architecture">Architecture</a>
+            <a href="#security">Security</a>
+            <a href="/chat" class="nav-cta">Try Live Demo →</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <div class="dot"></div>
+            AI-Powered Admin Agent
+        </div>
+        <h1>Smart Scheduling for<br><span class="gradient">Australian Childcare Centres</span></h1>
+        <p>An AI assistant that handles roster management, staff cover, ratio compliance, and parent communications — secured with enterprise-grade encryption and built for the Australian NQS framework.</p>
+        <div class="hero-actions">
+            <a href="/chat" class="btn-primary">Launch Chat Demo</a>
+            <a href="#architecture" class="btn-secondary">View Architecture</a>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features">
+        <div class="section-header">
+            <span class="tag">Capabilities</span>
+            <h2>What ChildCareAI Can Do</h2>
+            <p>Seven specialised AI tools designed for childcare centre administration</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon purple">📋</div>
+                <h3>Smart Roster Drafting</h3>
+                <p>Auto-generates draft rosters based on staff availability, room assignments, and qualification requirements. Respects NQS educator-to-child ratios.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon cyan">🔄</div>
+                <h3>Instant Cover Finder</h3>
+                <p>When staff call in sick, the AI instantly identifies available cover staff ranked by room familiarity and qualification match.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon green">📊</div>
+                <h3>Ratio Compliance Check</h3>
+                <p>Real-time staff-to-child ratio monitoring across all rooms. Flags potential NQS breaches before they happen.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon amber">✉️</div>
+                <h3>Parent Communications</h3>
+                <p>Drafts professional, warm parent messages and newsletters with proper tone. All drafts require human review before sending.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon rose">⚠️</div>
+                <h3>Director Escalation</h3>
+                <p>Sensitive actions (roster changes, data access) automatically escalate to the director with time-limited approval tokens.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon sky">👥</div>
+                <h3>Staff Availability</h3>
+                <p>Query who's available for any date, room, or shift. Filters out staff on leave, already rostered, or without required qualifications.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture" class="arch-section">
+        <div class="section-header">
+            <span class="tag">System Design</span>
+            <h2>Multi-Layer Architecture</h2>
+            <p>Five distinct layers ensuring security, compliance, and reliability</p>
+        </div>
+        <div class="arch-grid">
+            <div class="arch-diagram">
+                <div class="arch-layer frontend">
+                    <span class="icon">🖥️</span>
+                    <div><strong>Frontend</strong> — Chat UI (HTML/CSS/JS)</div>
+                </div>
+                <div class="arch-arrow">↕</div>
+                <div class="arch-layer api">
+                    <span class="icon">⚡</span>
+                    <div><strong>API Layer</strong> — FastAPI + Auth Middleware</div>
+                </div>
+                <div class="arch-arrow">↕</div>
+                <div class="arch-layer orchestrator">
+                    <span class="icon">🧠</span>
+                    <div><strong>Orchestrator</strong> — Agent Loop + PII Filter</div>
+                </div>
+                <div class="arch-arrow">↕</div>
+                <div class="arch-layer security">
+                    <span class="icon">🔐</span>
+                    <div><strong>Security</strong> — RBAC + Approval + Audit</div>
+                </div>
+                <div class="arch-arrow">↕</div>
+                <div class="arch-layer data">
+                    <span class="icon">💾</span>
+                    <div><strong>Data</strong> — SQLAlchemy + AES-256 Encryption</div>
+                </div>
+            </div>
+            <div class="arch-details">
+                <h3>Built for Childcare Compliance</h3>
+                <p>The agent follows a structured agentic loop: receive message → strip PII → reason with AI → execute tools → check permissions → restore PII → respond. Every action is logged in a tamper-proof audit trail.</p>
+                <ul class="arch-list">
+                    <li><span class="check">✓</span> PII stripped before AI processing — names never leave the server</li>
+                    <li><span class="check">✓</span> Role-Based Access Control (Director / Admin / Educator / ReadOnly)</li>
+                    <li><span class="check">✓</span> Time-limited approval tokens for sensitive actions</li>
+                    <li><span class="check">✓</span> AES-256-GCM field-level encryption at rest</li>
+                    <li><span class="check">✓</span> 7-year audit log retention for regulatory compliance</li>
+                    <li><span class="check">✓</span> Rate limiting and security headers (HSTS, CSP, XFO)</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security -->
+    <section id="security">
+        <div class="section-header">
+            <span class="tag">Data Protection</span>
+            <h2>Enterprise-Grade Security</h2>
+            <p>Children's data is the most sensitive — we protect it accordingly</p>
+        </div>
+        <div class="security-grid">
+            <div class="security-card">
+                <span class="icon">🔒</span>
+                <h4>AES-256-GCM Encryption</h4>
+                <p>All sensitive fields encrypted at rest with unique IVs per record</p>
+            </div>
+            <div class="security-card">
+                <span class="icon">🛡️</span>
+                <h4>PII Filter</h4>
+                <p>Names and personal data are masked with tokens before AI processing</p>
+            </div>
+            <div class="security-card">
+                <span class="icon">👤</span>
+                <h4>RBAC Enforcement</h4>
+                <p>4-tier role system — every tool checks permissions before execution</p>
+            </div>
+            <div class="security-card">
+                <span class="icon">📝</span>
+                <h4>Audit Trail</h4>
+                <p>Tamper-proof logs retained for 7 years per Australian regulations</p>
+            </div>
+            <div class="security-card">
+                <span class="icon">⏱️</span>
+                <h4>Approval Workflows</h4>
+                <p>Sensitive actions require director approval with expiring tokens</p>
+            </div>
+            <div class="security-card">
+                <span class="icon">🚫</span>
+                <h4>AI Guardrails</h4>
+                <p>8 strict guardrails prevent disclosure of children's data and unauthorised actions</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section>
+        <div class="section-header">
+            <span class="tag">Technology</span>
+            <h2>Built With</h2>
+        </div>
+        <div class="tech-grid">
+            <div class="tech-badge"><span class="dot python"></span> Python 3.11</div>
+            <div class="tech-badge"><span class="dot python"></span> FastAPI</div>
+            <div class="tech-badge"><span class="dot db"></span> SQLAlchemy (Async)</div>
+            <div class="tech-badge"><span class="dot db"></span> SQLite / aiosqlite</div>
+            <div class="tech-badge"><span class="dot ai"></span> OpenRouter AI</div>
+            <div class="tech-badge"><span class="dot security"></span> python-jose (JWT)</div>
+            <div class="tech-badge"><span class="dot security"></span> cryptography (AES-256)</div>
+            <div class="tech-badge"><span class="dot js"></span> Vanilla JS Frontend</div>
+            <div class="tech-badge"><span class="dot python"></span> Pydantic v2</div>
+            <div class="tech-badge"><span class="dot python"></span> pytest (Testing)</div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <h2>See It In Action</h2>
+        <p>Try the live AI assistant — ask it to check rosters, find cover, or draft a parent newsletter.</p>
+        <a href="/chat" class="btn-primary">Open Chat Demo →</a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>ChildCareAI Admin Agent — Built by <a href="https://github.com/surendra902" target="_blank">Surendra</a> · Secured with AES-256 · Australian Privacy Act Compliant</p>
+    </footer>
+</body>
+</html>

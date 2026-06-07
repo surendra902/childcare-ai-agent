@@ -233,3 +233,53 @@ async def check_ratios_endpoint(
         target_date=target_date or date_type.today(),
     )
     return result
+
+
+# ─── Demo / Public Chat Endpoint ─────────────────────────────────────────────
+
+# Session-scoped agent cache for HTTP stateless requests
+_demo_agents: dict[str, AgentOrchestrator] = {}
+
+
+@router.post("/demo/chat")
+async def demo_chat_endpoint(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Open chat endpoint for the deployed demo website.
+
+    Does NOT require JWT authentication — uses default demo user context.
+    Protected by rate-limiting middleware instead.
+    """
+    body = await request.json()
+    message = body.get("message", "").strip()
+    session_id = body.get("session_id", "demo-session")
+
+    if not message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+
+    # Reuse or create agent for this session
+    if session_id not in _demo_agents:
+        _demo_agents[session_id] = AgentOrchestrator(
+            session_id=session_id,
+            user_id="demo-user",
+            user_role="director",
+            centre_id="centre_1",
+            db=db,
+        )
+    else:
+        _demo_agents[session_id].db = db
+
+    agent = _demo_agents[session_id]
+    result = await agent.process_message(message)
+
+    return {
+        "content": result["content"],
+        "session_id": session_id,
+        "tool_calls": [
+            {"tool": tc["tool"], "result": tc["result"]}
+            for tc in result.get("tool_calls", [])
+        ],
+        "requires_approval": result.get("requires_approval", False),
+    }
+

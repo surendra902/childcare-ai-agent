@@ -71,9 +71,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Validate JWT token and attach user context to request."""
-        # Skip auth for health check, docs, frontend, and static files
-        skip_paths = ("/health", "/docs", "/redoc", "/openapi.json", "/", "/favicon.ico")
-        if request.url.path in skip_paths or request.url.path.startswith("/static"):
+        # Skip auth for health check, docs, frontend, demo endpoints, and static files
+        skip_paths = ("/health", "/docs", "/redoc", "/openapi.json", "/", "/chat", "/favicon.ico")
+        if (request.url.path in skip_paths
+            or request.url.path.startswith("/static")
+            or request.url.path.startswith("/api/v1/demo/")):
             return await call_next(request)
 
         token = request.headers.get("Authorization", "").replace("Bearer ", "")
