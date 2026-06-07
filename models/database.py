@@ -141,14 +141,13 @@ async def seed_demo_data() -> None:
         now = datetime.utcnow()
         today = date.today()
 
-        # ─── Centre ──────────────────────────────────────────────────────
-        centre_id = str(uuid4())
+        centre_id = "centre_1"
         centre = Centre(
             id=centre_id,
             name="Sunshine Early Learning Centre",
             address="42 Wattle Street, Melbourne VIC 3000",
             phone="+61 3 9876 5432",
-            email="admin@sunshinelc.com.au",
+            email="asurendra630@gmail.com",
             is_active=True,
             created_at=now,
         )

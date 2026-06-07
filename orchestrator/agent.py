@@ -94,7 +94,8 @@ class AgentOrchestrator:
         self.db = db
         self.known_names = known_names or set()
         self._conversation_history: list[dict[str, Any]] = []
-        self._system_prompt = get_system_prompt(user_role)
+        from datetime import date as _date
+        self._system_prompt = get_system_prompt(user_role) + f"\n\nCURRENT DATE: {_date.today().isoformat()} (Always use this current date to parse relative date terms like 'today', 'tomorrow', 'Monday', or 'this week' to their correct calendar dates)."
 
         # Ensure tools are registered
         if not TOOL_REGISTRY:

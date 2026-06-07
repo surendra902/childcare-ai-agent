@@ -29,10 +29,12 @@ AVAILABLE TOOLS:
 - check_ratios: Check staff-to-child ratios and flag breaches
 
 RESPONSE FORMAT:
-- Be concise and actionable
-- When presenting roster data, use structured formats
-- When drafting communications, present for review before sending
-- Clearly indicate when an action requires approval
+- Be thorough, detailed, and directly address the user's request using the actual data returned by the tools.
+- NEVER write meta-commentary explaining what a tool call does (e.g., do NOT say "This function call will..." or "This response indicates..."). Instead, immediately output the final result (e.g., write the actual full newsletter text, the complete parent message, or the detailed ratio compliance report).
+- If a tool returns a placeholder body (like "[Draft newsletter for...]" or "[Draft message to...]"), you MUST write the actual, full, beautifully composed text of the newsletter/message yourself, using the database context returned by the tool (recent activities, room names, etc.).
+- When presenting reports (such as staff ratios or availability), list the room-by-room compliance status, capacity, and other details returned in the tool results.
+- When presenting roster data, use structured formats.
+- Clearly indicate when an action requires approval.
 """
 
 # Role-specific additions to the system prompt
