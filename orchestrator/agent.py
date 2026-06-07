@@ -218,9 +218,12 @@ class AgentOrchestrator:
 
         api_key = settings.ANTHROPIC_API_KEY
         is_openrouter = api_key.startswith("sk-or-")
+        is_nvidia = api_key.startswith("nvapi-")
 
         if is_openrouter:
             return await self._call_openrouter(api_key)
+        elif is_nvidia:
+            return await self._call_nvidia(api_key)
 
         # Direct Anthropic API call
         import anthropic
@@ -409,6 +412,143 @@ class AgentOrchestrator:
         except Exception as e:
             import traceback
             print(f"\n[OPENROUTER ERROR] {type(e).__name__}: {e}")
+            traceback.print_exc()
+            return {
+                "role": "assistant",
+                "content": f"Connection error: {e}",
+                "tool_calls": [],
+                "raw_content": [],
+            }
+
+    async def _call_nvidia(self, api_key: str) -> dict[str, Any]:
+        """Call NVIDIA NIM API using OpenAI-compatible interface."""
+        import httpx
+
+        clean_messages = []
+        for msg in self._conversation_history:
+            role = msg["role"]
+            content = msg.get("content")
+
+            if isinstance(content, str):
+                clean_messages.append({
+                    "role": role,
+                    "content": content,
+                })
+            elif isinstance(content, list):
+                if role == "assistant":
+                    text_parts = []
+                    tool_calls = []
+                    for block in content:
+                        if block.get("type") == "text":
+                            text_parts.append(block.get("text", ""))
+                        elif block.get("type") == "tool_use":
+                            tool_calls.append({
+                                "id": block["id"],
+                                "type": "function",
+                                "function": {
+                                    "name": block["name"],
+                                    "arguments": json.dumps(block["input"]) if isinstance(block["input"], dict) else block["input"],
+                                }
+                            })
+                    msg_obj = {
+                        "role": "assistant",
+                        "content": " ".join(text_parts) if text_parts else None,
+                    }
+                    if tool_calls:
+                        msg_obj["tool_calls"] = tool_calls
+                    clean_messages.append(msg_obj)
+                elif role == "user":
+                    for block in content:
+                        if block.get("type") == "tool_result":
+                            clean_messages.append({
+                                "role": "tool",
+                                "tool_call_id": block["tool_use_id"],
+                                "content": block.get("content", ""),
+                            })
+
+        # Build OpenAI-format tool definitions
+        openai_tools = []
+        for tool_def in get_tool_definitions():
+            openai_tools.append({
+                "type": "function",
+                "function": {
+                    "name": tool_def["name"],
+                    "description": tool_def.get("description", ""),
+                    "parameters": tool_def.get("input_schema", {}),
+                },
+            })
+
+        print(f"\n[NVIDIA-MODEL]: {settings.OPENROUTER_MODEL}")
+        payload = {
+            "model": settings.OPENROUTER_MODEL,
+            "max_tokens": 1500,
+            "messages": [
+                {"role": "system", "content": self._system_prompt},
+                *clean_messages,
+            ],
+        }
+        if openai_tools:
+            payload["tools"] = openai_tools
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(
+                    "https://integrate.api.nvidia.com/v1/chat/completions",
+                    json=payload,
+                    headers=headers,
+                )
+
+                if resp.status_code != 200:
+                    error_body = resp.text
+                    print(f"\n[NVIDIA ERROR] Status {resp.status_code}: {error_body}")
+                    return {
+                        "role": "assistant",
+                        "content": f"API error ({resp.status_code}): {error_body[:200]}",
+                        "tool_calls": [],
+                        "raw_content": [],
+                    }
+
+                data = resp.json()
+                choice = data["choices"][0]
+                message = choice["message"]
+                text_content = message.get("content", "") or ""
+
+                tool_calls = []
+                raw_content = []
+
+                if message.get("tool_calls"):
+                    for tc in message["tool_calls"]:
+                        func = tc["function"]
+                        import json as _json
+                        tool_calls.append({
+                            "id": tc["id"],
+                            "name": func["name"],
+                            "input": _json.loads(func["arguments"]) if isinstance(func["arguments"], str) else func["arguments"],
+                        })
+                        raw_content.append({
+                            "type": "tool_use",
+                            "id": tc["id"],
+                            "name": func["name"],
+                            "input": _json.loads(func["arguments"]) if isinstance(func["arguments"], str) else func["arguments"],
+                        })
+
+                if text_content:
+                    raw_content.insert(0, {"type": "text", "text": text_content})
+
+                return {
+                    "role": "assistant",
+                    "content": text_content,
+                    "tool_calls": tool_calls,
+                    "raw_content": raw_content,
+                }
+        except Exception as e:
+            import traceback
+            print(f"\n[NVIDIA ERROR] {type(e).__name__}: {e}")
             traceback.print_exc()
             return {
                 "role": "assistant",
